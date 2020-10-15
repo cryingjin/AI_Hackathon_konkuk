@@ -3,6 +3,7 @@ Embedding Utils
 토큰화 된 문장들을 벡터화 시켜주는 함수와 그 보조함수들로 이루어져 있습니다.
 """
 
+import numpy as np
 import multiprocessing
 from collections import namedtuple
 from gensim.models import Word2Vec, Doc2Vec
@@ -14,6 +15,8 @@ Chi-square utils
 """
 
 # 긍정 / 혹은 부정 문장리스트
+
+# TODO: Add docstring
 
 
 def count_word(data, word):
@@ -74,7 +77,7 @@ def generate_word2vec_dict(tokens, embedding_dim=128, save_model=True):
     return {word: vector for word, vector in zip(words, vectors)}
 
 
-def vectorize_matrix_with_word2vec(tokens_list, embedding_dim=128):
+def vectorize_matrix_with_word2vec(tokens_list, embedding_dim=128, model=None):
     """
     word2vec 문장에 의거하여 문장을 벡터화
 
@@ -91,8 +94,8 @@ def vectorize_matrix_with_word2vec(tokens_list, embedding_dim=128):
 
     for i, tokens in enumerate(tokens_list):
         vector = np.array([
-            word_table[morph] for morph in morphs
-            if morph in word_table
+            word_table[token] for token in tokens
+            if token in word_table
         ])
 
         if vector.size != 0:
@@ -109,36 +112,36 @@ doc2vec utils
 
 def generate_doc2vec_matrix(tokens, labels):
     encoder = LabelEncoder()
-    tagged_document = namedtuple('TaggedDocument', ['words', 'tags'])
+    words_tags = namedtuple('TaggedDocument', ['words', 'tags'])
 
     str_labels = list(map(lambda x: 'pos' if x == 1 else 'neg', labels))
-    tagged_train_docs = [
-        tagged_document(word, tag)
-        for word, tag in zip(tokens, labels)
+    tagged_document = [
+        words_tags(word, tag)
+        for word, tag in zip(tokens, str_labels)
     ]
 
     cores = multiprocessing.cpu_count()
 
     doc_vectorizer = Doc2Vec(
-        dm=0,            # PV-DBOW / default 1
-        dbow_words=1,    # w2v simultaneous with DBOW d2v / default 0
-        window=5,        # distance between the predicted word and context words
-        size=128,        # vector size
-        alpha=0.025,     # learning-rate
+        dm=0,             # PV-DBOW / default 1
+        dbow_words=1,     # w2v simultaneous with DBOW d2v / default 0
+        window=5,         # distance between the predicted word and context words
+        vector_size=128,  # vector size
+        alpha=0.025,      # learning-rate
         seed=1234,
-        min_count=1,     # ignore with freq lower
+        min_count=1,      # ignore with freq lower
         min_alpha=0.025,  # min learning-rate
-        workers=cores,   # multi cpu
-        hs=1,          # hierarchical softmax / default 0
-        negative=5,   # negative sampling / default 5
+        workers=cores,    # multi cpu
+        hs=1,             # hierarchical softmax / default 0
+        negative=5,       # negative sampling / default 5
         epochs=20
     )
 
-    doc_vectorizer.build_vocab(tagged_train_docs)
+    doc_vectorizer.build_vocab(tagged_document)
 
     for epoch in range(10):
         doc_vectorizer.train(
-            tagged_train_docs,
+            tagged_document,
             total_examples=doc_vectorizer.corpus_count,
             epochs=doc_vectorizer.iter
         )
@@ -150,23 +153,28 @@ def generate_doc2vec_matrix(tokens, labels):
 
     doc_vectorizer.save('models/doc2vec.model')
 
-    # mk modeling set
-    X_train = [
+    vectorized_tokens = [
         doc_vectorizer.infer_vector(doc.words)
-        for doc in tagged_train_docs
+        for doc in tagged_document
     ]
-    y_train = [doc.tags for doc in tagged_train_docs]
-    X_test = [
+
+    return np.asarray(vectorized_tokens)
+
+
+def vectorize_matrix_with_doc2vec(tokens, labels, model=None):
+    words_tags = namedtuple('TaggedDocument', ['words', 'tags'])
+    str_labels = list(map(lambda x: 'pos' if x == 1 else 'neg', labels))
+    tagged_document = [
+        words_tags(word, tag)
+        for word, tag in zip(tokens, str_labels)
+    ]
+
+    doc_vectorizer = Doc2Vec.load(model) if model \
+        else generate_doc2vec_matrix(tokens, labels)
+
+    vectorized_tokens = [
         doc_vectorizer.infer_vector(doc.words)
-        for doc in tagged_test_docs
+        for doc in tagged_document
     ]
-    y_test = [doc.tags for doc in tagged_test_docs]
 
-    y_train_np = np.asarray(
-        [0 if c == 'neg' else 1 for c in y_train],
-        dtype=int
-    )
-    y_test_np = np.asarray([0 if c == 'neg' else 1 for c in y_test], dtype=int)
-
-    X_train_np = np.asarray(X_train)
-    X_test_np = np.array(X_test)
+    return np.asarray(vectorized_tokens)

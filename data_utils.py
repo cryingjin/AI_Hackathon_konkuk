@@ -1,11 +1,6 @@
-import numpy as np
-import pandas as pd
+import os
 import joblib
-import re
-import gensim
-from gensim import corpora
 from konlpy.tag import Okt
-from collections import namedtuple
 
 
 def load_data(base_dir):
@@ -20,12 +15,12 @@ def load_data(base_dir):
         (train_tokens, train_labels, test_tokens, test_labels) 형태의 데이터
     """
     train_tokens = joblib.load(os.path.join(base_dir, 'train_tokens.pickle'))
-    train_labels = joblib.load(os.path.join(base_dir, 'train_labels.pickle'))
+    train_labels = joblib.load(os.path.join(base_dir, 'train_label.pickle'))
 
     test_tokens = joblib.load(os.path.join(base_dir, 'test_tokens.pickle'))
-    test_labels = joblib.load(os.path.join(base_dir, 'test_labels.pickle'))
+    test_labels = joblib.load(os.path.join(base_dir, 'test_label.pickle'))
 
-    return train_tokens, train_labels, test_tokens, test_labels
+    return train_tokens, list(train_labels), test_tokens, list(test_labels)
 
 
 def tokenize(sentence):
