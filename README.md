@@ -1,6 +1,6 @@
 # tfidf, kai, tfidf+kai/ one-hot, count 
 
-train_x_size          1500    15000   15000   150000이상 -> 메모리 터짐(벡터 만들 때 본인이 직접 for문으로 만듦. 희소행렬로 만들어도 터짐. CountVectorize)
+train_x_size          1500    15000   15000   
 
 train_y_size          500     5000    5000
 
@@ -19,3 +19,7 @@ tfidf_cnt(count)      0.764   0.8238  0.8238
 kai_cnt(count)        0.76    0.8212  0.8242
 
 tfidf+kai_cnt(count)  0.764   0.822   0.8228
+
+train_x_size 150000이상 -> 메모리 터짐
+
+(벡터 만들 때 본인이 직접 for문으로 만들어서 그런듯. 희소행렬(sparse matrix)로 만들어도 터짐. CountVectorize )
