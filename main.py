@@ -1,70 +1,55 @@
-import re
-import csv
-import joblib
-import pickle
-import warnings
-import tqdm
-import os
-import pandas as pd
-import numpy as np
-import sys
-from gensim.models import Word2Vec
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics import accuracy_score
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from tensorflow.python.keras.preprocessing.sequence import pad_sequences
-from tensorflow.python.keras.preprocessing.text import Tokenizer
+from data_utils import load_data
+from embedding_utils import vectorize_matrix_with_word2vec, generate_doc2vec_matrix
 
 
 if __name__ == '__main__':
     # 1. Load data
-    train_sentence, train_label = load_data('data/ratings_train.txt')
-    test_sentence, test_label = load_data('data/ratings_test.txt')
-
     # 2. Generate tokens
+    # 현재 생성된 token 을 load 하는 방식으로만 통합 되어있음
+    base_dir = 'data'
+    train_tokens, train_labels, test_tokens, test_labels = load_data(base_dir)
 
-    # 3. Generate 5 features
+    # 3. Embedding
+    embed_types = ['count', 'word2vec', 'doc2vec']
+    train_x_dict = {
+        'count': None,
+        'word2vec': vectorize_matrix_with_word2vec(train_tokens),
+        'doc2vec': generate_doc2vec_matrix(train_tokens, train_labels),
+    }
+    test_x_dict = {
+        'count': None,
+        'word2vec': vectorize_matrix_with_word2vec(test_tokens),
+        'doc2vec': generate_doc2vec_matrix(test_tokens, test_labels),
+    }
 
-    # 4. Train classifiers with those features
-    classifiers = [
-        GaussianNB(),
+    # TODO: 4. Feature Engineering
 
-    ]
+    # 5. Train classifiers with those features
+    for embed_type in embed_types:
+        train_x = train_x_dict[embed_type]
+        test_x = test_x_dict[embed_type]
 
-    """
-    Modeling
-    """
-    X_train, X_test, y_train, y_test = train_test_split(X_train_np, y_train_np)
-    classifier = GaussianNB()
-    classifier.fit(X_train, y_train)
-    predictions_ = classifier.predict(X_test).tolist()
-    print('Accuracy: %.10f' % accuracy_score(y_test, predictions_))
+        # Naive Bayes
+        nb = GaussianNB()
+        nb.fit(train_x, train_labels)
+        nb_predictions = nb.predict(test_x, test_labels)
+        nb_acc_score = accuracy_score(test_labels, nb_predictions)
 
-    estimator = SVC()
-    n_estimators = 10
-    n_jobs = -1
+        # SVM with BaggingClassifier
+        estimator = SVC()
+        svm = BaggingClassifier(
+            base_estimator=10,
+            n_estimators=-1,
+            max_samples=(1 / 10),
+            max_features=1,
+            n_jobs=-1
+        )
+        svm.fit(train_x, train_labels)
+        svm_predictions = svm.predict(test_x, test_labels)
+        svm_acc_score = accuracy_score(test_labels, svm_predictions)
 
-    model = BaggingClassifier(
-        base_estimator=estimator,
-        n_estimators=n_estimators,
-        max_samples=(1 / n_estimators),
-        max_features=1,
-        n_jobs=n_jobs
-    )
+        # Print result
+        print('{} | NB: {} | SVM: {}'.format(
+            embed_type, nb_acc_score, svm_acc_score))
 
-    model.fit(X_train[:10000], y_train[:10000])
-    accuracy_score(model.predict(X_test), y_test)
-
-    # 5. Evaluate and print out result
-    for cf in classifiers:
-        cf.fit(train_x, train_y)
-        predictions = cf.predict(test_x)
-        accuracy = accuracy_score(test_y, predictions)
-        print('Classifier: {} | Accuracy: {}'.format(cf, accuracy))
-
-    # 6. Generate output file with final test data (opens in 10:00 AM)
+    # TODO: 6. Ensemble

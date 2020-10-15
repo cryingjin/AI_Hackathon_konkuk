@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import pickle
+import joblib
 import re
 import gensim
 from gensim import corpora
@@ -8,31 +8,24 @@ from konlpy.tag import Okt
 from collections import namedtuple
 
 
-def load_data(path):
+def load_data(base_dir):
     """
     파일을 읽어서 빈 데이터 제거 후 sentences 와 labels 로 분리하여 리턴
 
     Args:
-        path(str): 파일 경로
+        base_dir(str): 파일 폴더 경로
 
     Returns:
-        tuple(list(str), list(int)): (sentences, labels) 형태의 데이터
+        tuple(list(list(str)), list(int), list(list(str)), list(int)): 
+        (train_tokens, train_labels, test_tokens, test_labels) 형태의 데이터
     """
-    sentences = []
-    labels = []
+    train_tokens = joblib.load(os.path.join(base_dir, 'train_tokens.pickle'))
+    train_labels = joblib.load(os.path.join(base_dir, 'train_labels.pickle'))
 
-    with open(path, 'r', encoding='utf-8') as fp:
-        lines = fp.readlines()
-        for line in lines:
-            _, sentence, label = line.strip().split('\t')
-            cleaned_sentence = re.sub('[^ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+', ' ', sentence).strip()
+    test_tokens = joblib.load(os.path.join(base_dir, 'test_tokens.pickle'))
+    test_labels = joblib.load(os.path.join(base_dir, 'test_labels.pickle'))
 
-            # dropna 와 동일한 수행
-            if cleaned_sentence:
-                sentences.append(cleaned_sentence)
-                labels.append(label)
-
-        return sentences, labels
+    return train_tokens, train_labels, test_tokens, test_labels
 
 
 def tokenize(sentence):

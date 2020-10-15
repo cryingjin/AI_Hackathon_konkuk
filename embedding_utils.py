@@ -87,6 +87,7 @@ def vectorize_matrix_with_word2vec(tokens_list, embedding_dim=128):
     """
     size = len(tokens_list)
     matrix = np.zeros((size, embedding_dim))
+    word_table = generate_word2vec_dict(tokens_list, save_model=False)
 
     for i, tokens in enumerate(tokens_list):
         vector = np.array([
