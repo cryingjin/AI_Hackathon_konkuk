@@ -8,7 +8,7 @@ tfidf_dict_size       1000    1000    5000
 
 kai_dict_size         1000    1000    5000
 
-tfidf_sprs(onehot)            0.8272
+tfidf_sprs(onehot)_ComplementNB ????   (15000, 5000)0.8272
 
 tfidf_sprs(onehot)    0.766   0.8266  0.8266
 
