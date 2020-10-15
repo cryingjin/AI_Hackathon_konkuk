@@ -1,6 +1,6 @@
 # tfidf, kai, tfidf+kai/ one-hot, count 
 
-train_x_size          1500    15000   15000   150000이상 -> 메모리 터짐
+train_x_size          1500    15000   15000   150000이상 -> 메모리 터짐(벡터 만들 때 본인이 직접 for문으로 만듦. 희소행렬로 만들어도 터짐. CountVectorize)
 
 train_y_size          500     5000    5000
 
