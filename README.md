@@ -24,6 +24,10 @@ train_x_size 150000이상 -> 메모리 터짐
 
 (벡터 만들 때 본인이 직접 for문으로 만들어서 그런듯. 희소행렬(sparse matrix)로 만들어도 터짐. CountVectorize 써야됢.....)
 
-tfidf 상위 n개 단어사전 구축하고, 그 단어사전의 단어를 포함하고 있지 않은 문장 train_x에서 제외시키고, 그걸 Countvectorizer로 후, NB했을 때도 결과는 거의 동일 했다.
+tfidf 상위 n개 단어사전 구축(max_feature로 주나, 다뽑고 정렬시켜서 n개 짜르나 성능은 비슷함)
+
+하고, 그 단어사전의 단어를 포함하고 있지 않은 문장 train_x에서 제외시키고, 그걸 Countvectorizer로 후, NB했을 때도 결과는 거의 동일 했다.
 
 (train_x_size 1500000개일때 accuracy 0.84)
+
+
