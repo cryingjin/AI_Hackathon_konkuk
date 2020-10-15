@@ -13,26 +13,37 @@ from sklearn.preprocessing import LabelEncoder
 Chi-square utils
 """
 
+# 긍정 / 혹은 부정 문장리스트
 
-def wordCount(data, w):
+
+def count_word(data, word):
     cnt = 0
-    for s in data:
-        if w in s:
+    for sentence in data:
+        if word in sentence:
             cnt += 1
     return cnt
 
 
-def getKai(data, w, c):
-    A = wordCount(data[c], w)
-    B = wordCount(data[(c+1) % 2], w)
-    C = len(data[c]) - A
-    D = len(data[(c+1) % 2]) - B
-    # 분모가 0이면 0을 리턴함.
-    denominator = (A+B)*(A+C)*(B+D)*(C+D)
-    if denominator == 0:
-        return 0
+def get_chi_square(pos_doc_list, neg_doc_list, word):
+    """word 의 chi square 값을 리턴: 높을수록 긍정단어에 가깝고, 낮을수록 부정단어에 가까움
 
-    return ((A + B + C + D) * ((A * D - B * C) * (A * D - B * C))) / ((A + B) * (A + C) * (B + D) * (C + D))
+    Args:
+        pos_doc_list (list(str)): 긍정문서 리스트
+        neg_doc_list (list(str)): 부정문서 리스트
+        word (str): 대상 단어
+
+    Returns:
+        float: 해당 단어의 카이제곱 수치
+    """
+    A = count_word(pos_doc_list, word)
+    B = count_word(neg_doc_list, word)
+    C = len(pos_doc_list) - A
+    D = len(neg_doc_list) - B
+
+    # 분모가 0이면 0을 리턴함.
+    if ((A+B)*(A+C)*(B+D)*(C+D)) == 0:
+        return 0
+    return ((A+B+C+D)*((A*D-B*C)*(A*D-B*C))) / ((A+B)*(A+C)*(B+D)*(C+D))
 
 
 """
