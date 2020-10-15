@@ -50,7 +50,6 @@ def save_pickle(path,file):
         pickle.dump(file,f)
 
 
-
 ## load data
 train_data = pd.read_csv('ratings_train.txt', header = 0, delimiter = '\t', quoting = 3)
 test_data = pd.read_csv('ratings_test.txt', header = 0, delimiter = '\t', quoting = 3)
@@ -158,7 +157,7 @@ doc_vectorizer = Doc2Vec(
     alpha=0.025,     # learning-rate
     seed=1234,
     min_count=1,     # ignore with freq lower
-    min_alpha=0.025, # min learning-rate
+    min_alpha=0.01, # min learning-rate
     workers=cores,   # multi cpu
     hs = 1,          # hierarchical softmax / default 0
     negative = 5,   # negative sampling / default 5
@@ -179,20 +178,20 @@ model_name = 'Doc2vec_128_145791.model'
 doc_vectorizer.save(model_name)
 
 # doc2vec load
-model_name = 'Doc2vec(dbow+w,d300,n10,hs,w8,mc20,s0.001,t24).model'
+model_name = 'Doc2vec_128_145791.model'
 doc_vectorizer = Doc2Vec.load(model_name)
 
 # mk modeling set
 X_train = [doc_vectorizer.infer_vector(doc.words) for doc in tagged_train_docs]
 y_train = [doc.tags for doc in tagged_train_docs]
-X_test = [doc_vectorizer.infer_vector(doc.words) for doc in tagged_test_docs]
-y_test = [doc.tags for doc in tagged_test_docs]
+# X_test = [doc_vectorizer.infer_vector(doc.words) for doc in tagged_test_docs]
+# y_test = [doc.tags for doc in tagged_test_docs]
 
 y_train_np = np.asarray([0 if c == 'neg' else 1 for c in y_train], dtype=int)
-y_test_np = np.asarray([0 if c == 'neg' else 1 for c in y_test], dtype=int)
+# y_test_np = np.asarray([0 if c == 'neg' else 1 for c in y_test], dtype=int)
 
 X_train_np = np.asarray(X_train)
-X_test_np = np.array(X_test)
+# X_test_np = np.array(X_test)
 
 
 """
@@ -216,7 +215,7 @@ pos_cnt = [len(set(i)&pos_only) for i in train_tokens]
 neg_cnt = [len(set(i)&neg_only) for i in train_tokens]    
 ratio = (np.array(pos_cnt)+1)/(np.array(neg_cnt)+1)
 
-X_train_addfeature = np.concatenate((X_train_np,pos_cnt,neg_cnt,ratio),axis=1)
+X_train_addfeature = np.concatenate((X_train_np,np.array(pos_cnt).reshape(-1,1),np.array(neg_cnt).reshape(-1,1),ratio.reshape(-1,1)),axis=1)
 
 X_train_addfeature.shape
 
@@ -224,18 +223,18 @@ X_train_addfeature.shape
 """
 Modeling
 """
-X_train,X_test,y_train,y_test = train_test_split(X_train_np,y_train_np)
+X_train,X_test,y_train,y_test = train_test_split(X_train_addfeature,y_train_np)
 classifier = GaussianNB()
 classifier.fit(X_train, y_train)
 predictions_ = classifier.predict(X_test).tolist()
 print('Accuracy: %.10f' % accuracy_score(y_test, predictions_))
 
-estimator = SVC()
-n_estimators = 10
+estimator = LinearSVC()
+n_estimators = 100
 n_jobs = -1
 model = BaggingClassifier(base_estimator=estimator,
                           n_estimators=n_estimators,
-                          max_samples=1./n_estimators,max_features=1.0,
+                          max_samples=0.1,max_features=1.0,
                           n_jobs=n_jobs)
 
 model.fit(X_train[:10000],y_train[:10000])
