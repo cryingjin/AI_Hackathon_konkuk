@@ -1,4 +1,4 @@
-from data_utils import load_data
+from data_utils import load_pickle_data
 from embedding_utils import (
     vectorize_matrix_with_word2vec,
     vectorize_matrix_with_doc2vec
@@ -13,7 +13,8 @@ if __name__ == '__main__':
     # 2. Generate tokens
     # 현재 생성된 token 을 load 하는 방식으로만 통합 되어있음
     base_dir = 'data'
-    train_tokens, train_labels, test_tokens, test_labels = load_data(base_dir)
+    train_tokens, train_labels, test_tokens, test_labels \
+        = load_pickle_data(base_dir)
 
     # 3. Embedding
     embed_types = ['word2vec', 'doc2vec']
@@ -34,8 +35,6 @@ if __name__ == '__main__':
             model='model/doc2vec.model'
         ),
     }
-
-    # TODO: 4. Feature Engineering
 
     # 5. Train classifiers with those features
     total_classifiers = []

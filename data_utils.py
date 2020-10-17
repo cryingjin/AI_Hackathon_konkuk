@@ -1,11 +1,12 @@
 import os
 import joblib
+import re
 from konlpy.tag import Okt
 
 
-def load_data(base_dir):
+def load_pickle_data(base_dir):
     """
-    파일을 읽어서 빈 데이터 제거 후 sentences 와 labels 로 분리하여 리턴
+    토큰화하여 저장된 데이터 파일을 불러와서 리턴
 
     Args:
         base_dir(str): 파일 폴더 경로
@@ -23,6 +24,31 @@ def load_data(base_dir):
     return train_tokens, list(train_labels), test_tokens, list(test_labels)
 
 
+def load_text_data(base_dir):
+    """
+    파일을 읽어서 빈 데이터 제거 후 sentences 와 labels 로 분리하여 리턴
+
+    Args:
+        base_dir(str): 파일 폴더 경로
+
+    Returns:
+        tuple(list(str), list(int)): (tokens, labels) 형태의 데이터
+    """
+    indices = []
+    sentences = []
+
+    with open(base_dir, 'r', encoding='utf-8') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            index, sentence = line.strip().split('\t')
+            cleaned_sentence = re.sub('[^ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+', ' ', sentence).strip()
+
+            indices.append(index)
+            sentences.append(cleaned_sentence)
+
+        return indices, sentences
+
+
 def tokenize(sentence):
     """
     형태소를 분석하여 토큰화 후 [명사, 형용사, 부사] 만 리스트로 리턴
@@ -33,21 +59,14 @@ def tokenize(sentence):
     Returns:
         list(str): 형태소로 쪼개진 리스트
     """
-    stopwords = [
-        '의', '가', '이', '은', '들', '을', '는', '좀', '잘', '걍',
-        '과', '도', '를', '으로', '자', '에', '와', '한', '하다', '에서',
-        '되', '그', '수', '나', '것', '하', '있', '보', '주', '아니', '등',
-        '같', '때', '년', '가', '한', '지', '오', '말', '일', '다', '이다'
-    ]
 
     tagger = Okt()
-    morphs = tagger.pos(sentence, norm=True, stem=True)
-
-    using_pos = ['Noun', 'Adjective', 'Adverb']
+    morphs = tagger.pos(sentence)
+    non_using_pos = ['Josa', 'Punctuation', 'Number', 'Modifer', 'Eomi']
 
     return [
         morph[0] for morph in morphs
-        if morph[1] in using_pos and morph[0] not in stopwords
+        if morph[1] not in non_using_pos
     ]
 
 
