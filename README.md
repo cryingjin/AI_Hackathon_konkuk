@@ -32,3 +32,13 @@ then:
 ```
 $ python main.py
 ```
+
+will print final results for all classifiers used.
+
+### Submit
+
+for submission, run:
+
+```
+$ python submit.py
+```
