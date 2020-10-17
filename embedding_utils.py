@@ -16,10 +16,18 @@ Chi-square utils
 
 # 긍정 / 혹은 부정 문장리스트
 
-# TODO: Add docstring
-
 
 def count_word(data, word):
+    """
+    data 속에 word의 갯수를 셈
+
+    Args:
+        data (list(str)): 문서 집합
+        word (str): 단어
+
+    Returns:
+        int: 단어 갯수
+    """
     cnt = 0
     for sentence in data:
         if word in sentence:
@@ -54,7 +62,7 @@ word2vec utils
 """
 
 
-def generate_word2vec_dict(tokens, embedding_dim=128, save_model=True):
+def generate_word2vec_dict(tokens, embedding_dim=128, model=None):
     """
     word2vec 사전을 구성
 
@@ -66,10 +74,8 @@ def generate_word2vec_dict(tokens, embedding_dim=128, save_model=True):
     Returns:
         dict(str: numpy.ndarray): word2vec 매트릭스 딕셔너리
     """
-    model = Word2Vec(tokens, size=embedding_dim, min_count=1, sg=1)
-
-    if save_model:
-        model.save('model/word2vec.model')
+    if not model:
+        model = Word2Vec(tokens, size=embedding_dim, min_count=1, sg=1)
 
     words = model.wv.index2word
     vectors = model.wv.vectors
@@ -90,7 +96,7 @@ def vectorize_matrix_with_word2vec(tokens_list, embedding_dim=128, model=None):
     """
     size = len(tokens_list)
     matrix = np.zeros((size, embedding_dim))
-    word_table = generate_word2vec_dict(tokens_list, save_model=False)
+    word_table = generate_word2vec_dict(tokens_list, model=model)
 
     for i, tokens in enumerate(tokens_list):
         vector = np.array([
@@ -111,6 +117,16 @@ doc2vec utils
 
 
 def generate_doc2vec_matrix(tokens, labels):
+    """
+    Doc2vec 행렬을 생성
+
+    Args:
+        tokens (list(list(str))): 토큰화된 문장
+        labels (list(int)): 문장 레이블
+
+    Returns:
+        numpy.ndarray: doc2vec 행렬
+    """
     encoder = LabelEncoder()
     words_tags = namedtuple('TaggedDocument', ['words', 'tags'])
 
@@ -161,20 +177,24 @@ def generate_doc2vec_matrix(tokens, labels):
     return np.asarray(vectorized_tokens)
 
 
-def vectorize_matrix_with_doc2vec(tokens, labels, model=None):
-    words_tags = namedtuple('TaggedDocument', ['words', 'tags'])
-    str_labels = list(map(lambda x: 'pos' if x == 1 else 'neg', labels))
-    tagged_document = [
-        words_tags(word, tag)
-        for word, tag in zip(tokens, str_labels)
-    ]
+def vectorize_matrix_with_doc2vec(tokens, labels=None, model=None):
+    """
+    doc2vec 행렬에 의거 문장을 벡터화
 
-    doc_vectorizer = Doc2Vec.load(model) if model \
+    Args:
+        tokens (list(list(str))): 토큰화된 문장
+        labels (list(int), optional): 문장 레이블. 학습 시에만 사용. Defaults to None.
+        model (numpy.ndarray, optional): doc2vec 모델. Defaults to None.
+
+    Returns:
+        numpy.ndarray: 벡터화된 문장
+    """
+    doc_vectorizer = model if model  \
         else generate_doc2vec_matrix(tokens, labels)
 
     vectorized_tokens = [
-        doc_vectorizer.infer_vector(doc.words)
-        for doc in tagged_document
+        doc_vectorizer.infer_vector(token)
+        for token in tokens
     ]
 
     return np.asarray(vectorized_tokens)
