@@ -7,7 +7,7 @@
 Clone
 
 ```
-$ git clone https://github.com/HyunLee103/AI_Hackathon_konkuk/
+$ git clone https://github.com/cryingjin/NSMC-Sentimental-Analysis.git
 ```
 
 데이터와 미리 학습된 모델 파일들을 다음과 같은 디렉토리 구조에 맞게 넣어야 합니다:
